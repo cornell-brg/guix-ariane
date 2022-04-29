@@ -1,4 +1,11 @@
 
+# 1. Guix verilator package (need version 4.110)
+# 2. Guix dtc package
+# 3. ariane
+# 4. libfesvr.a (get this from Guix spike package?)
+# 5. cross-compile Guix pk package
+# 6. cross-compile Guix hello package
+
 # Setup a working directory
 
 export TOP=$PWD/work
