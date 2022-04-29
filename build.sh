@@ -1,42 +1,42 @@
 #!/usr/bin/env bash
 set -e
-# Set max number of jobs
-export NUM_JOBS=8
 
-# Set install dir for tools
-export INSTALL_DIR=${HOME}/.local
-mkdir -p ${INSTALL_DIR}
-export PATH=${INSTALL_DIR}:${PATH}
+# Setup a working directory
+export TOP=$HOME/tmp
+mkdir -p ${TOP}
+cd ${TOP}
 
-# Dependencies
-## Python3
+# guix install gcc toolchain
+guix install gcc-toolchain
+
+# guix install verilator 4.110
+cat > verilator-4.110.scm \
+<<'END'
+(use-modules (gnu packages fpga)
+             (guix packages)
+             (guix git-download))
+
+(package
+  (inherit verilator)
+  (version "4.110")
+  (source (origin
+            (inherit (package-source verilator))
+            (uri (git-reference
+                   (url "https://github.com/verilator/verilator")
+                   (commit (string-append "v" version))))
+            (sha256 (base32 "1lm2nyn7wzxj5y0ffwazhb4ygnmqf4d61sl937vmnmrpvdihsrrq")))))
+END
+
+guix package --install-from-file=verilator-4.110.scm
+
+# guix install python (not sure if needed)
 guix install python
 
-## Verilator
-### I used version 4.110 which is used in the ariane CI
-### Version 4.014 does _not_ work despite being referenced in the arianne repo (parsing errors)
-### Version 4.204 also does not seem to work (compiler errors)
-export version=4.110
-wget https://github.com/verilator/verilator/archive/refs/tags/v${version}.tar.gz
-tar -xvf v${version}.tar.gz
-rm v${version}.tar.gz
-cd verilator-${version}
-autoconf && ./configure --prefix=${INSTALL_DIR}
-make -j${NUM_JOBS}
-make install
-cd ..
-
-# Install device-tree-compiler. I used just used the latest release (v1.6.1)
-#export version=1.6.1
-#wget https://github.com/dgibson/dtc/archive/refs/tags/v${version}.tar.gz
-#tar -xvf v${version}.tar.gz
-#cd dtc-${version}
-#make -j${NUM_JOBS} install DESTDIR=${INSTALL_DIR}
+# guix install device tree compiler
 guix install dtc
 
-# Install RISCV tools
-## Set install folder
-export RISCV=${HOME}/riscv
+# TODO: install riscv toolchain (need to convert this to guix)
+export RISCV=${TOP}/riscv
 export PATH=${RISCV}/bin:${PATH}
 mkdir -p ${RISCV}
 
@@ -46,21 +46,35 @@ RISCV64_UNKNOWN_ELF_GCC=riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubu
 wget https://static.dev.sifive.com/dev-tools/${RISCV64_UNKNOWN_ELF_GCC}
 tar -xvf ${RISCV64_UNKNOWN_ELF_GCC} --strip-components=1 -C ${RISCV}
 
-# Clone ariane repo
+# guix install riscv-pk
+guix install riscv-pk
+
+# guix install hello-static
+cat > hello-static.scm \
+<<'END'
+(use-modules (gnu packages base)
+             (guix build-system gnu))
+
+(define hello-static
+ (static-package hello))
+
+hello-static
+END
+
+TMPDIR=$(guix build --target=riscv64-linux-gnu -f hello-static.scm)
+ln -sf $TMPDIR/bin/hello
+
+# clone Ariane
 git clone --recursive https://github.com/openhwgroup/cva6.git
+
 cd cva6
 
-# Install fesvr
-# The repo script does fine with this
+# TODO: package fesvr?
 ci/make-tmp.sh
 ci/install-fesvr.sh
 
-# Build RISCV tests
-# The repo script does fine with this
-ci/build-riscv-tests.sh
-
 # Generate verilator binary
-make verilate
+make verilate -j64
 
-# Run test
-work-ver/Variane_testharness tmp/riscv-tests/build/isa/rv64um-v-divuw
+# Run hello
+work-ver/Variane_testharness $(which pk) ${TOP}/hello
