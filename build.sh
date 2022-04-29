@@ -45,9 +45,10 @@ guix install dtc
 
 guix install gcc-toolchain
 
-# clone Ariane
+# clone Ariane (from BRG copy)
 
-git clone --recursive https://github.com/openhwgroup/cva6.git
+#git clone --recursive https://github.com/openhwgroup/cva6.git
+git clone --recursive git@github.com:cornell-brg/cva6.git
 
 # Maybe we want a separate package to build the fesvr? This part should
 # be pretty straight-forward? The fesvr is here:
@@ -61,17 +62,6 @@ git clone --recursive https://github.com/openhwgroup/cva6.git
 # I think the diference is the spike package does not currently install
 # libfesvr.a so maybe we just need to modify the spike package to do
 # that?
-
-# FIXME: risc-v toolchain
-export RISCV=$TOP/riscv
-export PATH=${RISCV}/bin:${PATH}
-mkdir -p ${RISCV}
-
-# The install scripts use precompiled libs from sifive, but they at least work on our machine
-# In theory they could be built from source or grabbed from a package manager
-RISCV64_UNKNOWN_ELF_GCC=riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14.tar.gz
-wget https://static.dev.sifive.com/dev-tools/${RISCV64_UNKNOWN_ELF_GCC}
-tar -xvf ${RISCV64_UNKNOWN_ELF_GCC} --strip-components=1 -C ${RISCV}
 
 cd $TOP/cva6
 ci/make-tmp.sh
@@ -106,8 +96,18 @@ END
 TMPDIR=$(guix build --target=riscv64-linux-gnu -f hello-static.scm)
 ln -sf $TMPDIR/bin/hello
 
+# guix install smith-waterman
+
+cd $TOP
+TMPDIR=$(guix build --target=riscv64-linux-gnu smithwaterman-static)
+ln -sf $TMPDIR/bin/smithwaterman
+
 # Run cross-compiled hello
 
 cd $TOP/cva6
 work-ver/Variane_testharness +time_out=10000000 $TOP/pk $TOP/hello
 
+# Run cross-compiled smith-waterman
+
+cd $TOP/cva6
+work-ver/Variane_testharness +max-cycles=100000000 +time_out=100000000 $TOP/pk $TOP/smithwaterman -p TGATTGTACCAAA TGATCATGTACCA
