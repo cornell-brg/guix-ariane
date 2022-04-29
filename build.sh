@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-set -e
 
 # Setup a working directory
 
@@ -75,6 +73,7 @@ ln -sf $TMPDIR/bin/pk
 
 # guix install hello-static
 
+cd $TOP
 cat > hello-static.scm \
 <<'END'
 (use-modules (gnu packages base)
