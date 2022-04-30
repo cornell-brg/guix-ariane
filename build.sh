@@ -63,9 +63,9 @@ git clone --recursive git@github.com:cornell-brg/cva6.git
 # libfesvr.a so maybe we just need to modify the spike package to do
 # that?
 
-cd $TOP/cva6
-ci/make-tmp.sh
-ci/install-fesvr.sh
+#cd $TOP/cva6
+#ci/make-tmp.sh
+#ci/install-fesvr.sh
 
 # Generate verilator binary ... this is the actual "building" part where
 # we create teh simulator.
