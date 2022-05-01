@@ -34,8 +34,8 @@ END
 guix package --install-from-file=verilator-4.110.scm
 
 # guix install device tree compiler
-
-guix install dtc
+# Note: dtc seems to only be a dependency of spike/fesvr and is not needed
+#guix install dtc
 
 # guix install gcc toolchain, we need to do this explicitly because we
 # need to use the same version of gcc that we used to compile verilator
@@ -66,9 +66,10 @@ git clone --recursive git@github.com:cornell-brg/cva6.git
 #cd $TOP/cva6
 #ci/make-tmp.sh
 #ci/install-fesvr.sh
+guix install spike
 
 # Generate verilator binary ... this is the actual "building" part where
-# we create teh simulator.
+# we create the simulator.
 
 cd $TOP/cva6
 make verilate -j64
