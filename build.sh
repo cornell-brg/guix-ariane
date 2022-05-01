@@ -44,6 +44,7 @@ guix package --install-from-file=verilator-4.110.scm
 # need to install gcc-toolchain?
 
 guix install gcc-toolchain
+. "$GUIX_PROFILE/etc/profile"
 
 # clone Ariane (from BRG copy)
 
